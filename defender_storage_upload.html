@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defender Storage Manager</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 28px;
+            border-radius: 16px;
+            margin-bottom: 28px;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .header-icon {
+            font-size: 40px;
+        }
+        .header-title {
+            flex: 1;
+        }
+        .header-title h1 {
+            font-size: 28px;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+        .header-title p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .panel {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            padding: 24px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .panel:hover {
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+        }
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .config-section {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+        .config-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #667eea;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        .config-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #ffffff;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+        }
+        .config-input::placeholder {
+            color: #a0aec0;
+        }
+        .config-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: #ffffff;
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+            margin-bottom: 16px;
+        }
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #ede9fe;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+        }
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .upload-text {
+            color: #718096;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .file-name {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        #fileInput {
+            display: none;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2c3e50;
+            border: 1px solid #cbd5e0;
+        }
+        .btn-secondary:hover {
+            background: #cbd5e0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 11px;
+            width: auto;
+            border: 1px solid #e0e6ed;
+            cursor: pointer;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+        }
+        .btn-download {
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+            color: #059669;
+        }
+        .btn-download:hover {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.1);
+        }
+        .btn-delete {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+        .btn-delete:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+        }
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            display: none;
+            margin-bottom: 16px;
+            line-height: 1.5;
+            border-left: 4px solid;
+        }
+        .status.show {
+            display: block;
+        }
+        .status.loading {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left-color: #3b82f6;
+        }
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border-left-color: #22c55e;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #7f1d1d;
+            border-left-color: #ef4444;
+        }
+        .spinner {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 6px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .file-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #f9fafb;
+            transition: all 0.3s ease;
+        }
+        .file-item:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        }
+        .file-icon {
+            font-size: 18px;
+            margin-right: 10px;
+        }
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .file-info-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+            word-break: break-all;
+        }
+        .file-info-meta {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+        .file-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: 10px;
+        }
+        .scan-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            white-space: nowrap;
+            border: 1px solid;
+        }
+        .scan-clean {
+            background: #ecfdf5;
+            color: #065f46;
+            border-color: #a7f3d0;
+        }
+        .scan-infected {
+            background: #fef2f2;
+            color: #7f1d1d;
+            border-color: #fecaca;
+        }
+        .scan-pending {
+            background: #fffbeb;
+            color: #92400e;
+            border-color: #fde68a;
+        }
+        .refresh-btn {
+            float: right;
+            padding: 6px 12px;
+            font-size: 12px;
+            background: #f0f4ff;
+            color: #667eea;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        .refresh-btn:hover {
+            background: #e0e7ff;
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #a0aec0;
+        }
+        .empty-state-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+        .tab-btn {
+            padding: 10px 16px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            color: #6b7280;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            text-transform: uppercase;
+        }
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: #f0f4ff;
+        }
+        .tab-btn:hover {
+            color: #667eea;
+            border-color: #e0e7ff;
+        }
+        .tab-content {
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .timeline {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .timeline-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            border-left: 4px solid;
+            margin-bottom: 8px;
+            background: #f9fafb;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .timeline-item:hover {
+            background: #f3f4f6;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+        }
+        .timeline-item.upload {
+            border-left-color: #3b82f6;
+        }
+        .timeline-item.scan {
+            border-left-color: #f59e0b;
+        }
+        .timeline-item.delete {
+            border-left-color: #ef4444;
+        }
+        .timeline-item.download {
+            border-left-color: #22c55e;
+        }
+        .timeline-item.error {
+            border-left-color: #ef4444;
+        }
+        .timeline-item.success {
+            border-left-color: #22c55e;
+        }
+        .timeline-item.info {
+            border-left-color: #3b82f6;
+        }
+        .timeline-icon {
+            font-size: 16px;
+            min-width: 16px;
+        }
+        .timeline-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .timeline-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .timeline-detail {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 4px;
+            word-break: break-word;
+        }
+        .timeline-time {
+            font-size: 11px;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <div class="header-icon">🛡️</div>
+            <div class="header-title">
+                <h1>Defender Storage Manager</h1>
+                <p>Microsoft Defender for Storage - File Upload & Antivirus Scan Management</p>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Upload Panel -->
+            <div class="panel">
+                <div class="panel-title">📤 Upload Files</div>
+
+                <div class="config-section">
+                    <div class="config-title">⚙️ Azure Configuration</div>
+                    <input type="text" id="storageAccount" class="config-input" placeholder="Storage Account Name">
+                    <input type="text" id="containerName" class="config-input" placeholder="Container Name">
+                    <input type="text" id="sasToken" class="config-input" placeholder="SAS Token">
+                </div>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click to select or drag file here</div>
+                    <div class="file-name" id="selectedFile"></div>
+                    <input type="file" id="fileInput">
+                </div>
+
+                <button class="btn btn-primary" id="uploadBtn" disabled>📤 Upload & Scan</button>
+                <button class="btn btn-secondary" id="clearBtn">🗑️ Clear</button>
+
+                <div class="status" id="uploadStatus"></div>
+            </div>
+
+            <!-- File Browser Panel -->
+            <div class="panel">
+                <div class="panel-title">
+                    📋 File Browser
+                    <button class="refresh-btn" id="refreshBtn">🔄 Refresh</button>
+                </div>
+
+                <div class="tabs" style="margin-bottom: 16px; display: flex; gap: 8px; border-bottom: 2px solid rgba(0, 255, 136, 0.2);">
+                    <button class="tab-btn active" data-tab="browser">📁 Files</button>
+                    <button class="tab-btn" data-tab="timeline">⏱️ Activity Log</button>
+                </div>
+
+                <div style="clear: both; margin-bottom: 16px;">
+                    <div class="status" id="browserStatus"></div>
+                </div>
+
+                <div id="browser-tab" class="tab-content">
+                    <div class="file-list" id="fileList">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📂</div>
+                            <div>No files yet</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="timeline-tab" class="tab-content" style="display: none;">
+                    <div class="timeline" id="timeline">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <div>No activity yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const selectedFileSpan = document.getElementById('selectedFile');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const browserStatus = document.getElementById('browserStatus');
+        const fileListDiv = document.getElementById('fileList');
+        const storageAccountInput = document.getElementById('storageAccount');
+        const containerInput = document.getElementById('containerName');
+        const sasTokenInput = document.getElementById('sasToken');
+
+        let selectedFile = null;
+
+        // Tab Switch
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+                
+                e.target.classList.add('active');
+                document.getElementById(e.target.dataset.tab + '-tab').style.display = 'block';
+            });
+        });
+
+        // Upload Area Events
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                selectFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                selectFile(e.target.files[0]);
+            }
+        });
+
+        function selectFile(file) {
+            selectedFile = file;
+            selectedFileSpan.textContent = `✓ ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            uploadBtn.disabled = false;
+        }
+
+        clearBtn.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            selectedFileSpan.textContent = '';
+            uploadBtn.disabled = true;
+            uploadStatus.classList.remove('show');
+        });
+
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            const storageAccount = storageAccountInput.value.trim();
+            const container = containerInput.value.trim();
+            const sasToken = sasTokenInput.value.trim();
+
+            if (!storageAccount || !container || !sasToken) {
+                showStatus('Please fill in all configuration fields', 'error', uploadStatus);
+                return;
+            }
+
+            await uploadFile(storageAccount, container, sasToken);
+        });
+
+        refreshBtn.addEventListener('click', async () => {
+            const storageAccount = storageAccountInput.value.trim();
+            const container = containerInput.value.trim();
+            const sasToken = sasTokenInput.value.trim();
+
+            if (!storageAccount || !container || !sasToken) {
+                showStatus('Please fill in the configuration', 'error', browserStatus);
+                return;
+            }
+
+            await listFiles(storageAccount, container, sasToken);
+        });
+
+        async function uploadFile(storageAccount, container, sasToken) {
+            const fileName = selectedFile.name;
+            const fileSize = (selectedFile.size / 1024 / 1024).toFixed(2);
+
+            addLog(`Uploading File`, `${fileName} (${fileSize} MB)`, 'upload', fileName);
+            showStatus('<span class="spinner"></span>Uploading file...', 'loading', uploadStatus);
+
+            try {
+                const blobUrl = `https://${storageAccount}.blob.core.windows.net/${container}/${fileName}?${sasToken}`;
+
+                const config = {
+                    headers: {
+                        'x-ms-blob-type': 'BlockBlob',
+                        'Content-Type': selectedFile.type || 'application/octet-stream'
+                    }
+                };
+
+                const startTime = performance.now();
+                await axios.put(blobUrl, selectedFile, config);
+                const uploadTime = ((performance.now() - startTime) / 1000).toFixed(2);
+
+                addLog(`Upload Complete`, `${fileName} - ${uploadTime}s`, 'success', fileName);
+                showStatus('<span class="spinner"></span>Defender scan initiated...', 'loading', uploadStatus);
+
+                await checkDefenderScan(storageAccount, container, fileName, sasToken);
+                selectedFile = null;
+                fileInput.value = '';
+                selectedFileSpan.textContent = '';
+                uploadBtn.disabled = true;
+
+                setTimeout(() => listFiles(storageAccount, container, sasToken), 500);
+
+            } catch (error) {
+                console.error('Error:', error);
+                addLog(`Upload Error`, error.message, 'error');
+                showStatus(`❌ Error: ${error.message}`, 'error', uploadStatus);
+            }
+        }
+
+        async function checkDefenderScan(storageAccount, container, fileName, sasToken) {
+            const maxAttempts = 20;
+            const interval = 1500;
+
+            addLog(`Scan Initiated`, `${fileName}`, 'scan', fileName);
+
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                try {
+                    const blobUrl = `https://${storageAccount}.blob.core.windows.net/${container}/${fileName}?${sasToken}`;
+                    const response = await axios.head(blobUrl);
+                    const malwareStatus = response.headers['x-ms-meta-malware-status'];
+
+                    if (malwareStatus) {
+                        if (malwareStatus.includes('clean') || malwareStatus.includes('unscanned')) {
+                            addLog(`Scan Complete`, `${fileName} - Clean ✓`, 'success', fileName);
+                            showStatus('✅ File uploaded and scanned successfully.', 'success', uploadStatus);
+                            return;
+                        } else if (malwareStatus.includes('infected')) {
+                            addLog(`Threat Detected`, `${fileName} - Malware!`, 'error', fileName);
+                            showStatus('⚠️ File detected as malicious!', 'error', uploadStatus);
+                            return;
+                        }
+                    }
+
+                    if (attempt === maxAttempts - 1) {
+                        addLog(`Scan Pending`, `${fileName} - Result pending`, 'info', fileName);
+                        showStatus('✅ File uploaded. Scan still in progress.', 'success', uploadStatus);
+                        return;
+                    }
+
+                    await new Promise(resolve => setTimeout(resolve, interval));
+
+                } catch (error) {
+                    if (error.response?.status === 404) {
+                        addLog(`File Error`, `${fileName} not found`, 'error');
+                        showStatus('❌ File not found', 'error', uploadStatus);
+                        return;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, interval));
+                }
+            }
+        }
+
+        async function listFiles(storageAccount, container, sasToken) {
+            showStatus('<span class="spinner"></span>Loading files...', 'loading', browserStatus);
+
+            try {
+                const listUrl = `https://${storageAccount}.blob.core.windows.net/${container}?restype=container&comp=list&${sasToken}`;
+
+                const startTime = performance.now();
+                const response = await axios.get(listUrl);
+                const loadTime = ((performance.now() - startTime) / 1000).toFixed(2);
+
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(response.data, "text/xml");
+                const blobs = xmlDoc.querySelectorAll('Blob');
+
+                if (blobs.length === 0) {
+                    fileListDiv.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><div>No files yet</div></div>';
+                    showStatus('', '', browserStatus);
+                    return;
+                }
+
+                let html = '';
+                for (let blob of blobs) {
+                    const name = blob.querySelector('Name').textContent;
+                    const size = parseInt(blob.querySelector('Properties > Content-Length').textContent);
+                    const modified = blob.querySelector('Properties > Last-Modified').textContent;
+                    
+                    const metadata = blob.querySelector('Metadata');
+                    let scanStatus = 'pending';
+                    let scanStatusText = 'Scanning';
+                    let scanBadgeClass = 'scan-pending';
+
+                    if (metadata) {
+                        const malwareStatus = metadata.querySelector('Malware-Status')?.textContent;
+                        if (malwareStatus) {
+                            if (malwareStatus.includes('clean') || malwareStatus.includes('unscanned')) {
+                                scanStatus = 'clean';
+                                scanStatusText = 'Clean ✓';
+                                scanBadgeClass = 'scan-clean';
+                            } else if (malwareStatus.includes('infected')) {
+                                scanStatus = 'infected';
+                                scanStatusText = 'Infected ✗';
+                                scanBadgeClass = 'scan-infected';
+                            }
+                        }
+                    }
+
+                    const sizeInMB = (size / 1024 / 1024).toFixed(2);
+                    const modifiedDate = new Date(modified).toLocaleString('en-US');
+
+                    html += `
+                        <div class="file-item">
+                            <div class="file-icon">📄</div>
+                            <div class="file-info">
+                                <div class="file-info-name">${name}</div>
+                                <div class="file-info-meta">
+                                    ${sizeInMB} MB • ${modifiedDate}
+                                </div>
+                            </div>
+                            <div style="margin: 0 10px;">
+                                <span class="scan-badge ${scanBadgeClass}">${scanStatusText}</span>
+                            </div>
+                            <div class="file-actions">
+                                <button class="btn-small btn-download" onclick="downloadFile('${storageAccount}', '${container}', '${name}', '${sasToken}')">⬇️ Download</button>
+                                <button class="btn-small btn-delete" onclick="deleteFile('${storageAccount}', '${container}', '${name}', '${sasToken}')">🗑️ Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                fileListDiv.innerHTML = html;
+                addLog(`File List Updated`, `${blobs.length} files - ${loadTime}s`, 'info');
+                showStatus('', '', browserStatus);
+
+            } catch (error) {
+                console.error('Error:', error);
+                addLog(`List Error`, error.message, 'error');
+                showStatus(`❌ Failed to load files: ${error.message}`, 'error', browserStatus);
+            }
+        }
+
+        async function downloadFile(storageAccount, container, fileName, sasToken) {
+            try {
+                addLog(`Download Started`, fileName, 'download', fileName);
+                const blobUrl = `https://${storageAccount}.blob.core.windows.net/${container}/${fileName}?${sasToken}`;
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                addLog(`Download Complete`, fileName, 'success', fileName);
+            } catch (error) {
+                addLog(`Download Error`, error.message, 'error');
+                alert('❌ Download error: ' + error.message);
+            }
+        }
+
+        async function deleteFile(storageAccount, container, fileName, sasToken) {
+            if (!confirm(`Delete "${fileName}"?`)) return;
+
+            try {
+                addLog(`Deletion Started`, fileName, 'delete', fileName);
+                const blobUrl = `https://${storageAccount}.blob.core.windows.net/${container}/${fileName}?${sasToken}`;
+                await axios.delete(blobUrl);
+                addLog(`Deletion Complete`, fileName, 'success', fileName);
+                showStatus('✅ File deleted', 'success', browserStatus);
+                await listFiles(storageAccount, container, sasToken);
+            } catch (error) {
+                addLog(`Deletion Error`, error.message, 'error');
+                showStatus(`❌ Delete error: ${error.message}`, 'error', browserStatus);
+            }
+        }
+
+        function showStatus(message, type, element) {
+            element.innerHTML = message;
+            element.className = `status ${type ? 'show ' + type : ''}`;
+        }
+
+        function addLog(title, detail, type = 'info', fileName = '') {
+            const timeline = document.getElementById('timeline');
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US');
+            const dateStr = now.toLocaleDateString('en-US');
+
+            const emptyState = timeline.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            const icons = {
+                upload: '📤',
+                scan: '🔍',
+                delete: '🗑️',
+                download: '⬇️',
+                error: '❌',
+                success: '✅',
+                info: 'ℹ️'
+            };
+
+            const item = document.createElement('div');
+            item.className = `timeline-item ${type}`;
+            item.innerHTML = `
+                <div class="timeline-icon">${icons[type] || '•'}</div>
+                <div class="timeline-content">
+                    <div class="timeline-title">${title}</div>
+                    <div class="timeline-detail">${detail}</div>
+                    <div class="timeline-time">${dateStr} ${timeStr}</div>
+                </div>
+            `;
+
+            timeline.insertBefore(item, timeline.firstChild);
+
+            const items = timeline.querySelectorAll('.timeline-item');
+            if (items.length > 50) {
+                items[items.length - 1].remove();
+            }
+        }
+
+        // Local Storage
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('defenderConfig');
+            if (saved) {
+                const config = JSON.parse(saved);
+                storageAccountInput.value = config.storageAccount || '';
+                containerInput.value = config.container || '';
+                sasTokenInput.value = config.sasToken || '';
+            }
+        });
+
+        [storageAccountInput, containerInput, sasTokenInput].forEach(input => {
+            input.addEventListener('change', () => {
+                localStorage.setItem('defenderConfig', JSON.stringify({
+                    storageAccount: storageAccountInput.value,
+                    container: containerInput.value,
+                    sasToken: sasTokenInput.value
+                }));
+            });
+        });
+    </script>
+</body>
+</html>
