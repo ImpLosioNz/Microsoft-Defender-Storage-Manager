@@ -1,8 +1,6 @@
 # Defender Storage Manager
 
-A cybersecurity-themed web application for managing file uploads to Azure Blob Storage with Microsoft Defender for Storage integration. Upload files, monitor antivirus scans, and manage your storage with a sleek neon interface.
-
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+Web application for managing file uploads to Azure Blob Storage with Microsoft Defender for Storage integration. Upload files, monitor antivirus scans, and manage your storage.
 
 ## 🎯 Features
 
@@ -240,35 +238,3 @@ Contributions are welcome! To contribute:
 2. Create a feature branch
 3. Make your changes
 4. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## ⚠️ Disclaimer
-
-This tool is for authorized testing and management of Azure Storage only. Users are responsible for:
-- Ensuring they have proper authorization to use Azure services
-- Following their organization's security policies
-- Protecting their SAS tokens and Azure credentials
-- Compliance with data protection regulations (GDPR, CCPA, etc.)
-
-## 🆘 Support
-
-For issues or questions:
-
-1. Check the **Troubleshooting** section
-2. Review Azure Storage documentation
-3. Check browser developer console (F12) for error details
-4. Open an issue on GitHub with details and error messages
-
-## 📚 Resources
-
-- [Azure Blob Storage Documentation](https://docs.microsoft.com/azure/storage/blobs/)
-- [Microsoft Defender for Storage](https://docs.microsoft.com/azure/defender-for-cloud/defender-for-storage-introduction)
-- [Azure Storage SAS Tokens](https://docs.microsoft.com/azure/storage/common/storage-sas-overview)
-- [CORS Configuration](https://docs.microsoft.com/azure/storage/blobs/storage-cors-resource-sharing)
-
----
-
-**Made with 🛡️ for security professionals**
